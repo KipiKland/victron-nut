@@ -275,9 +275,14 @@ impl LogicManager {
 							if soc >= restart_soc {
 								shutdown_policy_state.triggered_shutdown = false;
 								if shutdown_policy_state.restart_required {
-									info!("Shutdown Policy {}: Restarting ...", shutdown_policy_state.policy_config.name);
 									shutdown_policy_state.restart_required = false;
-									pending_restarts.push(shutdown_policy_state.policy_config.clone());
+
+									if shutdown_policy_state.is_client_connected(&self.app).await {
+										info!("Shutdown Policy {}: Client is already connected, skipping restart ...", shutdown_policy_state.policy_config.name);
+									} else {
+										info!("Shutdown Policy {}: Restarting ...", shutdown_policy_state.policy_config.name);
+										pending_restarts.push(shutdown_policy_state.policy_config.clone());
+									}
 								} else {
 									info!("Shutdown Policy {}: Restart soc reached, but no restart is required", shutdown_policy_state.policy_config.name);
 								}
