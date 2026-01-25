@@ -1,3 +1,5 @@
 victron-nut.conf
 target/
 /victron-nut
+/artifacts
+/.gitlab-ci-local

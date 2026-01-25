@@ -10,10 +10,8 @@ build:
   stage: build
   script:
     - cargo build --target armv7-unknown-linux-gnueabihf --release
-    - cargo build --release
     - rm -rf artifacts && mkdir -p artifacts
     - mv target/armv7-unknown-linux-gnueabihf/release/victron-nut artifacts/victron-nut-armv7
-    - mv target/release/victron-nut artifacts/victron-nut-amd64
   only:
     - master
   tags:
