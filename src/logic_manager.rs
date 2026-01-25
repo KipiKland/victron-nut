@@ -115,7 +115,7 @@ impl ShutdownPolicyState {
 #[derive(Debug)]
 pub struct LogicState {
 	pub remaining_battery_percentage: i32,
-	pub remaining_battery_runtime: i32,
+	pub remaining_battery_runtime_secs: i32,
 	pub status: LogicStatus,
 	pub forced_shutdown: bool,
 	pub shutdown_policy_states: Vec<ShutdownPolicyState>,
@@ -125,7 +125,7 @@ impl LogicState {
 	pub fn new() -> Self {
 		Self {
 			remaining_battery_percentage: 100,
-			remaining_battery_runtime: -1,
+			remaining_battery_runtime_secs: -1,
 			status: LogicStatus::Unknown,
 			forced_shutdown: false,
 			shutdown_policy_states: Vec::new(),
@@ -136,7 +136,7 @@ impl LogicState {
 	pub fn calculate_hash_for_status(&self) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		self.remaining_battery_percentage.hash(&mut hasher);
-		self.remaining_battery_runtime.hash(&mut hasher);
+		self.remaining_battery_runtime_secs.hash(&mut hasher);
 		self.status.hash(&mut hasher);
 		self.forced_shutdown.hash(&mut hasher);
 		hasher.finish()
@@ -185,7 +185,7 @@ impl LogicManager {
 		let current_power_consumption = cmp::max(current_power_consumption_on_output, current_power_consumption_on_battery * -1);
 
 		let remaining_battery_wh = self.app.config.battery_wh as f32 * (battery_soc_remaining as f32 / 100.0);
-		let remaining_battery_runtime: f32 = Self::calculate_remaining_battery_runtime(remaining_battery_wh, current_power_consumption as f32);
+		let remaining_battery_runtime: f32 = Self::calculate_remaining_battery_runtime_secs(remaining_battery_wh, current_power_consumption as f32);
 		
 		let state_changes = {
 			let mut logic_state = self.app.logic_state.write().await;
@@ -193,7 +193,7 @@ impl LogicManager {
 			let old_status = logic_state.status.clone();
 
 			logic_state.remaining_battery_percentage = Self::calculate_usv_battery_percentage(battery_soc, self.app.config.inverter_shutdown_soc);
-			logic_state.remaining_battery_runtime = remaining_battery_runtime as i32;
+			logic_state.remaining_battery_runtime_secs = remaining_battery_runtime as i32;
 			logic_state.status = self.calculate_status().await?;
 
 			if !logic_state.status.eq(&old_status) {
@@ -244,13 +244,13 @@ impl LogicManager {
 		}
 	}
 
-	fn calculate_remaining_battery_runtime(remaining_battery_wh: f32, current_power_consumption: f32) -> f32 {
+	fn calculate_remaining_battery_runtime_secs(remaining_battery_wh: f32, current_power_consumption: f32) -> f32 {
 		if remaining_battery_wh <= 0.0 {
 			0.0
 		} else if current_power_consumption <= INTERNAL_INVERTER_CONSUMPTION {
-			remaining_battery_wh / INTERNAL_INVERTER_CONSUMPTION * 60.0
+			remaining_battery_wh / INTERNAL_INVERTER_CONSUMPTION * 60.0 * 60.0
 		} else {
-			remaining_battery_wh / current_power_consumption * 60.0
+			remaining_battery_wh / current_power_consumption * 60.0 * 60.0
 		}
 	}
 

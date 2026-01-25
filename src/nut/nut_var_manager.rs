@@ -1,4 +1,4 @@
-use crate::nut::nut_var_provider::{NutVarProvider, NutVarProviderChargerStatus, NutVarProviderConfig, NutVarProviderDbus, NutVarProviderDbusF64, NutVarProviderDbusTime, NutVarProviderLogicRemainingBatteryPercentage, NutVarProviderLogicRemainingBatteryRuntime, NutVarProviderMacAddress, NutVarProviderRealPowerConsumption, NutVarProviderStatic, NutVarProviderUpsStatus, NutVarReadScope, NutvarProviderBatteryPercentageLow, NutvarProviderBatteryPercentageRestart, ProviderError};
+use crate::nut::nut_var_provider::{NutVarProvider, NutVarProviderChargerStatus, NutVarProviderConfig, NutVarProviderDbus, NutVarProviderDbusF64, NutVarProviderDbusTime, NutVarProviderLogicRemainingBatteryPercentage, NutVarProviderRemainingBatteryRuntime, NutVarProviderMacAddress, NutVarProviderRealPowerConsumption, NutVarProviderStatic, NutVarProviderUpsStatus, NutVarReadScope, NutvarProviderBatteryPercentageLow, NutvarProviderBatteryPercentageRestart, ProviderError};
 use crate::dbus::{INVERTER_DEST, BATTERY_DEST, PLATFORM_DEST};
 
 pub struct NutVar {
@@ -64,7 +64,7 @@ impl NutVarManager {
 		manager.register_var("output.inverter.latency", Box::new(NutVarProviderStatic::new("0.02")));
 		manager.register_var("output.frequency.nominal", Box::new(NutVarProviderStatic::new("50")));
 
-		manager.register_var("battery.runtime", Box::new(NutVarProviderLogicRemainingBatteryRuntime));
+		manager.register_var("battery.runtime", Box::new(NutVarProviderRemainingBatteryRuntime));
 		manager.register_var("battery.voltage", Box::new(NutVarProviderDbusF64::new("/Devices/0/Diagnostics/UBatVSense", INVERTER_DEST)));
 		manager.register_var("battery.voltage.bms", Box::new(NutVarProviderDbusF64::new("/Dc/0/Voltage", BATTERY_DEST)));
 		manager.register_var("battery.current", Box::new(NutVarProviderDbusF64::new("/Dc/0/Current", BATTERY_DEST)));

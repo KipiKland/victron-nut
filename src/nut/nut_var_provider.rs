@@ -179,12 +179,12 @@ impl NutVarProvider for NutVarProviderLogicRemainingBatteryPercentage {
 	}
 }
 
-pub struct NutVarProviderLogicRemainingBatteryRuntime;
+pub struct NutVarProviderRemainingBatteryRuntime;
 #[async_trait]
-impl NutVarProvider for NutVarProviderLogicRemainingBatteryRuntime {
+impl NutVarProvider for NutVarProviderRemainingBatteryRuntime {
 	async fn get_value(&self, scope: &NutVarReadScope) -> Result<String, ProviderError> {
 		let logic_state = scope.app.logic_state.read().await;
-		Ok(logic_state.remaining_battery_runtime.to_string())
+		Ok(logic_state.remaining_battery_runtime_secs.to_string())
 	}
 }
 
