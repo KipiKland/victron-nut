@@ -1,0 +1,23 @@
+[package]
+name = "victron-nut"
+version = "1.0.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7.17" }
+lazy_static = "1.5.0"
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+async-trait = "0.1.89"
+mac_address = { version = "1.1.8", features = ["serde"] }
+toml = "0.9.8"
+serde = { version = "1.0", features = ["derive"] }
+futures = "0.3.31"
+secure-string = "0.3.0"
+uuid = { version = "1.18.1", features = ["v4"] }
+env_logger = "0.11.8"
+log = "0.4"
+chrono = "0.4"
+reqwest = "0.13.1"
+serde_json = "1.0.149"
+enum-display = "0.2.1"
