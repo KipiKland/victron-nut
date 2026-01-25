@@ -47,7 +47,13 @@ impl Command for LoginCommand {
 			let username = client_data.username.as_ref().ok_or(CommandExecutionError::AccessDenied)?;
 			let password = client_data.password.as_ref().ok_or(CommandExecutionError::AccessDenied)?;
 
-			client_data.authenticated_user = Some(app.config.find_user(&username, password).ok_or(CommandExecutionError::AccessDenied)?);
+			match app.config.find_user(&username, password) {
+				Some(user) => client_data.authenticated_user = Some(user),
+				None => {
+					connection.log(log::Level::Info, "Failed to authenticate").await;
+					return Err(CommandExecutionError::AccessDenied);
+				}
+			}
 			client_data.password.as_mut().map(|pw| pw.zero_out());
 		}
 
