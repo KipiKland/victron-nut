@@ -365,7 +365,7 @@ pub async fn update_restart_required(app: &Application) {
 	let mut changes = false;
 
 	for shutdown_policy_state in logic_state.shutdown_policy_states.iter_mut() {
-		if shutdown_policy_state.triggered_shutdown && shutdown_policy_state.policy_config.restart_soc.is_some() && shutdown_policy_state.is_client_connected(&app).await {
+		if shutdown_policy_state.triggered_shutdown && !shutdown_policy_state.restart_required && shutdown_policy_state.policy_config.restart_soc.is_some() && shutdown_policy_state.is_client_connected(&app).await {
 			info!("Shutdown Policy {}: Marked as restart required.", shutdown_policy_state.policy_config.name);
 			shutdown_policy_state.restart_required = true;
 			changes = true;
