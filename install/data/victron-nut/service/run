@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "*** starting victron-nut ***"
+exec 2>&1
+. /etc/profile.d/profile.sh
+exec /data/victron-nut/start.sh
