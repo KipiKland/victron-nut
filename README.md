@@ -24,7 +24,7 @@ It's optimized for the following hardware:
 
 1. Follow victron documentation to get SSH access to your GX device
 2. Copy **install/data/victron-nut** folder from this repo to **/data/victron-nut** on the GX device
-3. Compile binary and copy it to **/data/victron-nut/victron-nut-armv7**
+3. Compile binary (or download compiled binaries from my gitlab - https://git.howaner.de/Howaner/victron-nut/-/artifacts) and copy it to **/data/victron-nut/victron-nut-armv7**
 4. Copy example.conf to **/data/victron-nut/victron-nut.conf** and customize it
 5. Create /data/rc.local file with the following text:
 ```
