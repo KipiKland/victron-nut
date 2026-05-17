@@ -15,10 +15,10 @@ For restarting, the following two actions are supported:
 
 ### What victron devices are supported
 
-I developed the software to run on my "USV", because Victron inverter and a battery is much cheaper than a real USV.  
 It's optimized for the following hardware:
+
+* Victron Multiplus II 48/5000/70-50 or 48/3000/35-32,other inverters with any VE.BUS (automatic detection)
 * Plyontech US5000 Battery
-* Victron Multiplus II GX 48/3000/35-32
 
 ### Installation
 
