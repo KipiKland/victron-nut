@@ -1,12 +1,18 @@
+# Dynamic VE.Bus Detection Patch
+
+Replace the contents of `src/dbus.rs` with the following:
+
+```rust
 use std::error::Error;
 use core::fmt;
-use zbus::{Connection};
-use zbus::{zvariant::OwnedValue};
+use zbus::Connection;
+use zbus::zvariant::OwnedValue;
 
 pub const DBUS_INTERFACE: &str = "com.victronenergy.BusItem";
-pub const INVERTER_DEST: &str = "com.victronenergy.vebus.ttyS3";
 pub const PLATFORM_DEST: &str = "com.victronenergy.platform";
 pub const BATTERY_DEST: &str = "com.victronenergy.battery.socketcan_can0";
+
+const VEBUS_PREFIX: &str = "com.victronenergy.vebus.";
 
 #[derive(Debug)]
 pub enum DbusReadError {
@@ -61,26 +67,114 @@ impl fmt::Display for DbusPath {
 
 #[derive(Debug)]
 pub struct Dbus {
-	pub connection: Connection
+	pub connection: Connection,
+	pub inverter_dest: String,
 }
+
 impl Dbus {
 	pub async fn new() -> Result<Self, Box<dyn Error>> {
 		let connection = Connection::system().await?;
 
+		let inverter_dest = Self::detect_vebus_service(&connection).await?;
+
+		println!("Detected VE.Bus service: {}", inverter_dest);
+
 		Ok(Self {
-			connection: connection
+			connection,
+			inverter_dest,
 		})
 	}
 
-	pub async fn get_value<T>(&self, path: &str, destination: &str) -> Result<T, DbusReadError> where T: TryFrom<OwnedValue> {
+	async fn detect_vebus_service(connection: &Connection) -> Result<String, Box<dyn Error>> {
+		let proxy = zbus::fdo::DBusProxy::new(connection).await?;
+		let names = proxy.list_names().await?;
+
+		let service = names
+			.into_iter()
+			.find(|name| name.starts_with(VEBUS_PREFIX))
+			.ok_or("No VE.Bus DBus service found")?;
+
+		Ok(service.to_string())
+	}
+
+	pub async fn get_value<T>(&self, path: &str, destination: &str) -> Result<T, DbusReadError>
+	where
+		T: TryFrom<OwnedValue>
+	{
 		self.get_value_by_path(DbusPath::new(path, destination)).await
 	}
 
-	pub async fn get_value_by_path<T>(&self, path: DbusPath) -> Result<T, DbusReadError> where T: TryFrom<OwnedValue> {
-		let proxy = zbus::Proxy::new(&self.connection, path.destination.as_str(), path.path.as_str(), DBUS_INTERFACE).await.map_err(|e| DbusReadError::ZbusProxyCreationFailed(path.clone(), Box::new(e)))?;
-		let value: OwnedValue = proxy.call("GetValue", &()).await.map_err(|e| DbusReadError::GetValueCallFailed(path.clone(), Box::new(e)))?;
+	pub async fn get_inverter_value<T>(&self, path: &str) -> Result<T, DbusReadError>
+	where
+		T: TryFrom<OwnedValue>
+	{
+		self.get_value(path, self.inverter_dest.as_str()).await
+	}
 
-		let casted_value = <T>::try_from(value).map_err(|_| DbusReadError::ValueConversionFailed(path.clone(), std::any::type_name::<T>().to_string()))?;
+	pub async fn get_value_by_path<T>(&self, path: DbusPath) -> Result<T, DbusReadError>
+	where
+		T: TryFrom<OwnedValue>
+	{
+		let proxy = zbus::Proxy::new(
+			&self.connection,
+			path.destination.as_str(),
+			path.path.as_str(),
+			DBUS_INTERFACE,
+		)
+		.await
+		.map_err(|e| DbusReadError::ZbusProxyCreationFailed(path.clone(), Box::new(e)))?;
+
+		let value: OwnedValue = proxy
+			.call("GetValue", &())
+			.await
+			.map_err(|e| DbusReadError::GetValueCallFailed(path.clone(), Box::new(e)))?;
+
+		let casted_value = <T>::try_from(value)
+			.map_err(|_| DbusReadError::ValueConversionFailed(path.clone(), std::any::type_name::<T>().to_string()))?;
+
 		Ok(casted_value)
 	}
 }
+```
+
+Then replace usages of:
+
+```rust
+INVERTER_DEST
+```
+
+with:
+
+```rust
+self.dbus.inverter_dest.as_str()
+```
+
+or preferably:
+
+```rust
+self.dbus.get_inverter_value(...)
+```
+
+Example conversion:
+
+Before:
+
+```rust
+self.dbus.get_value::<i32>("/Mode", INVERTER_DEST).await
+```
+
+After:
+
+```rust
+self.dbus.get_inverter_value::<i32>("/Mode").await
+```
+
+This now automatically detects:
+
+```text
+com.victronenergy.vebus.ttyS3
+com.victronenergy.vebus.ttyS4
+com.victronenergy.vebus.ttyUSB0
+```
+
+without hardcoding the device name.
